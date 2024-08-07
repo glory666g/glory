@@ -8,5 +8,9 @@ int main(void)
 
 
 
+<<<<<<< HEAD
 
 aaa
+=======
+ddd
+>>>>>>> 75d0e6a8050edc96f1352eab554980f380bcb0f4
