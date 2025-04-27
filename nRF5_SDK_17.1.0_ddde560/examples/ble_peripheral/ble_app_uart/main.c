@@ -70,7 +70,7 @@
 #include "nrf_pwr_mgmt.h"
 
 #include "ble_bas.h"//电池电量服务
-#include "nrf_drv_saadc.h"//ADC
+#include "nrf_drv_saadc.h"//ADC模块
 
 #if defined (UART_PRESENT)
 #include "nrf_uart.h"
@@ -142,10 +142,26 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 
 /**@brief Function for initializing the timer module.
  */
+//定时器初始化函数
+APP_TIMER_DEF(m_battery_timer_id);
+#define BATTERY_ACQUISITION_INTERVAL APP_TIMER_TICKS(100)
+
+static void m_battery_timer_handler(void *p_context)
+{
+	UNUSED_PARAMETER(p_context);
+	
+	ret_code_t err_code = nrf_drv_saadc_sample();
+	APP_ERROR_CHECK(err_code);
+}
+
 static void timers_init(void)
 {
     ret_code_t err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
+	
+		err_code = app_timer_create(&m_battery_timer_id,APP_TIMER_MODE_REPEATED,
+	                                                       m_battery_timer_handler);
+		APP_ERROR_CHECK(err_code);
 }
 
 /**@brief Function for the GAP initialization.
@@ -228,13 +244,28 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
     }
 
 }
+
+
 /**@snippet [Handling the data received over BLE] */
 
+//电池电量服务回调函数
 static void bas_event_handler(ble_bas_t * p_bas, ble_bas_evt_t * p_evt)
 {
+	ret_code_t err_code;
+	switch(p_evt->evt_type){
+		case BLE_BAS_EVT_NOTIFICATION_ENABLED:
+			err_code = app_timer_start(m_battery_timer_id,BATTERY_ACQUISITION_INTERVAL,NULL);
+			APP_ERROR_CHECK(err_code);
+			break;
+		case BLE_BAS_EVT_NOTIFICATION_DISABLED:
+			err_code = app_timer_stop(m_battery_timer_id);
+			APP_ERROR_CHECK(err_code);
+			break;
+		default:
+			break;
+	}
 	
 }
-
 
 /**@brief Function for initializing services that will be used by the application.
  */
@@ -245,7 +276,7 @@ static void services_init(void)
     nrf_ble_qwr_init_t qwr_init = {0};
 
 		ble_bas_init_t bas_init;
-		
+
     // Initialize Queued Write Module.
     qwr_init.error_handler = nrf_qwr_error_handler;
 
@@ -260,11 +291,10 @@ static void services_init(void)
     err_code = ble_nus_init(&m_nus, &nus_init);
     APP_ERROR_CHECK(err_code);
 		
-		
 		//初始化电池电量服务
 		memset(&bas_init,0,sizeof(bas_init));
 		
-		bas_init.evt_handler = bas_event_handler;
+		bas_init.evt_handler = bas_event_handler; //注册电池电量回调函数
 		bas_init.support_notification = true;
 		bas_init.p_report_ref = NULL;
 		bas_init.initial_batt_level = 100;
@@ -273,8 +303,10 @@ static void services_init(void)
 		bas_init.bl_cccd_wr_sec = SEC_OPEN;
 		bas_init.bl_report_rd_sec = SEC_OPEN;
 		
-		err_code = ble_bas_init(&m_bas,&bas_init);
+		err_code = ble_bas_init(&m_bas,&bas_init); //初始化电池电量服务
+		
 		APP_ERROR_CHECK(err_code);
+		
 }
 
 
@@ -290,7 +322,7 @@ static void services_init(void)
  * @param[in] p_evt  Event received from the Connection Parameters Module.
  */
 static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
-{
+{ 
     uint32_t err_code;
 
     if (p_evt->evt_type == BLE_CONN_PARAMS_EVT_FAILED)
@@ -298,6 +330,7 @@ static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
         err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
         APP_ERROR_CHECK(err_code);
     }
+		
 }
 
 
@@ -831,8 +864,58 @@ static void idle_state_handle(void)
     }
 }
 
+//SAADC代码
+#define SAMPLES_IN_BUFFER 1
+static nrf_saadc_value_t m_buffer_pool[2][SAMPLES_IN_BUFFER];//初始化缓冲区
 
+static void saadc_init(void)
+{
+	ret_code_t err_code;
+	//将ADC引脚设置为VDD引脚
+	nrf_saadc_channel_config_t channel_config = NRF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_VDD);
+	
+//	err_code = nrf_drv_saadc_init(NULL,saadc_callback);
+	
+	APP_ERROR_CHECK(err_code);
+	//SAADC通道初始化，配置前面的参数
+	err_code=nrf_drv_saadc_channel_init(0,&channel_config);
+	APP_ERROR_CHECK(err_code);
+	
+	//配置缓冲区buffer1
+	err_code=nrf_drv_saadc_buffer_convert(m_buffer_pool[0],SAMPLES_IN_BUFFER);
+	APP_ERROR_CHECK(err_code);
+	
+	//配置缓冲区buffer2
+	err_code=nrf_drv_saadc_buffer_convert(m_buffer_pool[1],SAMPLES_IN_BUFFER);
+	APP_ERROR_CHECK(err_code);
+}
 
+void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
+{
+	if(p_event->type == NRF_DRV_SAADC_EVT_DONE)
+	{
+		ret_code_t err_code;
+		int16_t adc_value;
+		uint16_t battery_voltage;
+		uint8_t battery_level;
+		
+		err_code = nrf_drv_saadc_buffer_convert(p_event->data.done.p_buffer,
+																										SAMPLES_IN_BUFFER);
+		APP_ERROR_CHECK(err_code);
+		adc_value = p_event->data.done.p_buffer[0];
+		//将电压转化成电池电量
+		battery_voltage = (adc_value*3.6/1024)*1000;
+		battery_level = battery_level_in_percent(battery_voltage);
+		//上报主机
+		err_code = ble_bas_battery_level_update(&m_bas,battery_level,BLE_CONN_HANDLE_ALL);
+		if((err_code!=NRF_SUCCESS)&&(err_code!=NRF_ERROR_INVALID_STATE)&&(err_code!=NRF_ERROR_RESOURCES)&&
+			(err_code!=NRF_ERROR_BUSY)&&(err_code!=BLE_ERROR_GATTS_SYS_ATTR_MISSING))
+		{
+			APP_ERROR_HANDLER(err_code);
+		}
+	}
+	
+}
 
 
 /**@brief Application main function.

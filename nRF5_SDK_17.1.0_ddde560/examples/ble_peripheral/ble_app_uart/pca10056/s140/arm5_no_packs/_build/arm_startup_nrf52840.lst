@@ -542,20 +542,20 @@ eaders\nrf52 -I..\..\..\..\..\..\external\fprintf -I..\..\..\..\..\..\external\
 segger_rtt -I..\..\..\..\..\..\external\utf_converter -I..\..\..\..\..\..\integ
 ration\nrfx -I..\..\..\..\..\..\integration\nrfx\legacy -I..\..\..\..\..\..\mod
 ules\nrfx -I..\..\..\..\..\..\modules\nrfx\drivers\include -I..\..\..\..\..\..\
-modules\nrfx\hal -I..\config -I.\RTE\_nrf52840_xxaa -ID:\keil\packs\ARM\CMSIS\5
-.6.0\CMSIS\Core\Include -ID:\keil\packs\NordicSemiconductor\nRF_DeviceFamilyPac
-k\8.40.3\Device\Include --predefine="__EVAL SETA 1" --predefine="__MICROLIB SET
-A 1" --predefine="__UVISION_VERSION SETA 527" --predefine="_RTE_ SETA 1" --pred
-efine="NRF52840_XXAA SETA 1" --predefine="APP_TIMER_V2 SETA 1" --predefine="APP
-_TIMER_V2_RTC1_ENABLED SETA 1" --predefine="BOARD_PCA10056 SETA 1" --predefine=
-"CONFIG_GPIO_AS_PINRESET SETA 1" --predefine="FLOAT_ABI_HARD SETA 1" --predefin
-e="NRF52840_XXAA SETA 1" --predefine="NRF_SD_BLE_API_VERSION SETA 7" --predefin
-e="S140 SETA 1" --predefine="SOFTDEVICE_PRESENT SETA 1" --predefine="__HEAP_SIZ
-E SETA 8192" --predefine="__STACK_SIZE SETA 8192" --cpreproc_opts=-DAPP_TIMER_V
-2,-DAPP_TIMER_V2_RTC1_ENABLED,-DBOARD_PCA10056,-DCONFIG_GPIO_AS_PINRESET,-DFLOA
-T_ABI_HARD,-DNRF52840_XXAA,-DNRF_SD_BLE_API_VERSION=7,-DS140,-DSOFTDEVICE_PRESE
-NT,-D__HEAP_SIZE=8192,-D__STACK_SIZE=8192 --list=.\_build\arm_startup_nrf52840.
-lst RTE\Device\nRF52840_xxAA\arm_startup_nrf52840.s
+modules\nrfx\hal -I..\config -I.\RTE\_nrf52840_xxaa -ID:\KEIL\PACKS\ARM\CMSIS\5
+.6.0\CMSIS\Core\Include -ID:\KEIL\PACKS\NordicSemiconductor\nRF_DeviceFamilyPac
+k\8.40.3\Device\Include --predefine="__MICROLIB SETA 1" --predefine="__UVISION_
+VERSION SETA 527" --predefine="_RTE_ SETA 1" --predefine="NRF52840_XXAA SETA 1"
+ --predefine="APP_TIMER_V2 SETA 1" --predefine="APP_TIMER_V2_RTC1_ENABLED SETA 
+1" --predefine="BOARD_PCA10056 SETA 1" --predefine="CONFIG_GPIO_AS_PINRESET SET
+A 1" --predefine="FLOAT_ABI_HARD SETA 1" --predefine="NRF52840_XXAA SETA 1" --p
+redefine="NRF_SD_BLE_API_VERSION SETA 7" --predefine="S140 SETA 1" --predefine=
+"SOFTDEVICE_PRESENT SETA 1" --predefine="__HEAP_SIZE SETA 8192" --predefine="__
+STACK_SIZE SETA 8192" --cpreproc_opts=-DAPP_TIMER_V2,-DAPP_TIMER_V2_RTC1_ENABLE
+D,-DBOARD_PCA10056,-DCONFIG_GPIO_AS_PINRESET,-DFLOAT_ABI_HARD,-DNRF52840_XXAA,-
+DNRF_SD_BLE_API_VERSION=7,-DS140,-DSOFTDEVICE_PRESENT,-D__HEAP_SIZE=8192,-D__ST
+ACK_SIZE=8192 --list=.\_build\arm_startup_nrf52840.lst RTE\Device\nRF52840_xxAA
+\arm_startup_nrf52840.s
 
 
 
@@ -1270,4 +1270,4 @@ Symbol: __main
       At line 217 in file RTE\Device\nRF52840_xxAA\arm_startup_nrf52840.s
 Comment: __main used once
 2 symbols
-427 symbols in table
+426 symbols in table
