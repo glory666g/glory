@@ -72,6 +72,7 @@
 #include "ble_bas.h"//电池电量服务
 #include "nrf_drv_saadc.h"//ADC模块
 
+
 #if defined (UART_PRESENT)
 #include "nrf_uart.h"
 #endif
@@ -160,7 +161,7 @@ static void timers_init(void)
     APP_ERROR_CHECK(err_code);
 	
 		err_code = app_timer_create(&m_battery_timer_id,APP_TIMER_MODE_REPEATED,
-	                                                       m_battery_timer_handler);
+	                                                         m_battery_timer_handler);
 		APP_ERROR_CHECK(err_code);
 }
 
@@ -863,32 +864,9 @@ static void idle_state_handle(void)
         nrf_pwr_mgmt_run();
     }
 }
-
 //SAADC代码
 #define SAMPLES_IN_BUFFER 1
 static nrf_saadc_value_t m_buffer_pool[2][SAMPLES_IN_BUFFER];//初始化缓冲区
-
-static void saadc_init(void)
-{
-	ret_code_t err_code;
-	//将ADC引脚设置为VDD引脚
-	nrf_saadc_channel_config_t channel_config = NRF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_VDD);
-	
-//	err_code = nrf_drv_saadc_init(NULL,saadc_callback);
-	
-	APP_ERROR_CHECK(err_code);
-	//SAADC通道初始化，配置前面的参数
-	err_code=nrf_drv_saadc_channel_init(0,&channel_config);
-	APP_ERROR_CHECK(err_code);
-	
-	//配置缓冲区buffer1
-	err_code=nrf_drv_saadc_buffer_convert(m_buffer_pool[0],SAMPLES_IN_BUFFER);
-	APP_ERROR_CHECK(err_code);
-	
-	//配置缓冲区buffer2
-	err_code=nrf_drv_saadc_buffer_convert(m_buffer_pool[1],SAMPLES_IN_BUFFER);
-	APP_ERROR_CHECK(err_code);
-}
 
 void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
 {
@@ -899,8 +877,7 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
 		uint16_t battery_voltage;
 		uint8_t battery_level;
 		
-		err_code = nrf_drv_saadc_buffer_convert(p_event->data.done.p_buffer,
-																										SAMPLES_IN_BUFFER);
+		err_code = nrf_drv_saadc_buffer_convert(p_event->data.done.p_buffer,SAMPLES_IN_BUFFER);
 		APP_ERROR_CHECK(err_code);
 		adc_value = p_event->data.done.p_buffer[0];
 		//将电压转化成电池电量
@@ -916,6 +893,32 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
 	}
 	
 }
+
+
+
+static void saadc_init(void)
+{
+	ret_code_t err_code;
+	//将ADC引脚设置为VDD引脚
+	nrf_saadc_channel_config_t channel_config = NRF_DRV_SAADC_DEFAULT_CHANNEL_CONFIG_SE(NRF_SAADC_INPUT_VDD);
+	
+	err_code = nrf_drv_saadc_init(NULL,saadc_callback);
+	
+	APP_ERROR_CHECK(err_code);
+	//SAADC通道初始化，配置前面的参数
+	err_code=nrf_drv_saadc_channel_init(0,&channel_config);
+	APP_ERROR_CHECK(err_code);
+	
+	//配置缓冲区buffer1
+	err_code=nrf_drv_saadc_buffer_convert(m_buffer_pool[0],SAMPLES_IN_BUFFER);
+	APP_ERROR_CHECK(err_code);
+	
+	//配置缓冲区buffer2
+	err_code=nrf_drv_saadc_buffer_convert(m_buffer_pool[1],SAMPLES_IN_BUFFER);
+	APP_ERROR_CHECK(err_code);
+}
+
+
 
 
 /**@brief Application main function.
@@ -937,6 +940,8 @@ int main(void)
     advertising_init();
     conn_params_init();
 
+		saadc_init();//ADC初始化
+	
     // Start execution.
     printf("\r\nUART started.\r\n");
     NRF_LOG_INFO("Debug logging for UART over RTT started.");

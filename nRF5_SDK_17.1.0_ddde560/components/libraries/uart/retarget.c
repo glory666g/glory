@@ -99,6 +99,7 @@ int __getchar(FILE * p_file)
 
 #if defined(__SES_VERSION) && (__SES_VERSION >= 34000)
 int __putchar(int ch, __printf_tag_ptr tag_ptr)
+//int __putchar(int ch, FILE* tag_ptr)
 {
     UNUSED_PARAMETER(tag_ptr);
 

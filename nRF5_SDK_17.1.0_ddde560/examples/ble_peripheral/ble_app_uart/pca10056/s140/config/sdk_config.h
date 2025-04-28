@@ -3437,7 +3437,7 @@
 //==========================================================
 //电池电量服务修改宏定义
 #ifndef NRFX_SAADC_ENABLED
-#define NRFX_SAADC_ENABLED 1
+#define NRFX_SAADC_ENABLED  1
 #endif
 // <o> NRFX_SAADC_CONFIG_RESOLUTION  - Resolution
  

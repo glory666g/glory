@@ -39,7 +39,7 @@
  */
 #include <nrfx.h>
 
-#if NRFX_CHECK(NRFX_SAADC_ENABLED)
+#if NRFX_CHECK(1)
 #include <nrfx_saadc.h>
 
 #define NRFX_LOG_MODULE SAADC
