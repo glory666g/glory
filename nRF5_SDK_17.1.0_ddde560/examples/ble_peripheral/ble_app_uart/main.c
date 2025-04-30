@@ -895,7 +895,6 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
 }
 
 
-
 static void saadc_init(void)
 {
 	ret_code_t err_code;

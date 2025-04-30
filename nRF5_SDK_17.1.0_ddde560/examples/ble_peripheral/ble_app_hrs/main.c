@@ -81,6 +81,8 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+#include "ble_nus.h" //BLE_NUS 
+BLE_NUS_DEF(m_nus,NRF_SDH_BLE_TOTAL_LINK_COUNT);
 
 #define DEVICE_NAME                         "Nordic_HRM"                            /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                   "NordicSemiconductor"                   /**< Manufacturer. Will be passed to Device Information Service. */
@@ -463,7 +465,16 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
     APP_ERROR_HANDLER(nrf_error);
 }
 
+static void nus_data_handler(ble_nus_evt_t * p_evt)
+{
+	if(p_evt->type == BLE_NUS_EVT_RX_DATA)
+	{
+		uint32_t err_code;
+		NRF_LOG_INFO("");
+		NRF_LOG_HEXDUMP_INFO(p_evt->params.rx_data.p_data,p_evt->params.rx_data.length);
+	}
 
+}
 /**@brief Function for initializing services that will be used by the application.
  *
  * @details Initialize the Heart Rate, Battery and Device Information services.
@@ -477,6 +488,13 @@ static void services_init(void)
     nrf_ble_qwr_init_t qwr_init = {0};
     uint8_t            body_sensor_location;
 
+		//NUS
+		ble_nus_init_t nus_init;
+		
+		nus_init.data_handler = nus_data_handler;
+		err_code=ble_nus_init(&m_nus,&nus_init);
+		
+		
     // Initialize Queued Write Module.
     qwr_init.error_handler = nrf_qwr_error_handler;
 
@@ -834,6 +852,17 @@ void bsp_event_handler(bsp_event_t event)
 
 /**@brief Function for the Peer Manager initialization.
  */
+
+
+#define sec_param_bond           	1
+#define sec_param_mitm           	0
+#define sec_param_lesc           	0
+#define sec_param_keypress        0
+#define sec_param_io_caps       	BLE_GAP_IO_CAPS_DISPLAY_ONLY
+#define sec_param_oob            	0
+#define sec_param_min_key_size  	7
+#define sec_param_max_key_size    16
+
 static void peer_manager_init(void)
 {
     ble_gap_sec_params_t sec_param;
@@ -841,18 +870,11 @@ static void peer_manager_init(void)
 
     err_code = pm_init();
     APP_ERROR_CHECK(err_code);
-
+		
     memset(&sec_param, 0, sizeof(ble_gap_sec_params_t));
 
     // Security parameters to be used for all security procedures.
-    sec_param.bond           = SEC_PARAM_BOND;
-    sec_param.mitm           = SEC_PARAM_MITM;
-    sec_param.lesc           = SEC_PARAM_LESC;
-    sec_param.keypress       = SEC_PARAM_KEYPRESS;
-    sec_param.io_caps        = SEC_PARAM_IO_CAPABILITIES;
-    sec_param.oob            = SEC_PARAM_OOB;
-    sec_param.min_key_size   = SEC_PARAM_MIN_KEY_SIZE;
-    sec_param.max_key_size   = SEC_PARAM_MAX_KEY_SIZE;
+   
     sec_param.kdist_own.enc  = 1;
     sec_param.kdist_own.id   = 1;
     sec_param.kdist_peer.enc = 1;
@@ -974,7 +996,7 @@ int main(void)
 
     // Start execution.
     NRF_LOG_INFO("Heart Rate Sensor example started.");
-    application_timers_start();
+    application_timers_start(  );
     advertising_start(erase_bonds);
 
     // Enter main loop.
